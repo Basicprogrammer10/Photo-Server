@@ -1,0 +1,9 @@
+The Albums must be formatted like this
+
+album_<NAME>
+ ├── config.cfg
+ ├── readme.md
+ └── images
+      ├── image_one.png
+      ├── another_image.png
+      └── ...
