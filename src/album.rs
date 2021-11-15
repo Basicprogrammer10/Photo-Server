@@ -27,6 +27,7 @@ pub struct Album {
     pub host_path: String,
     pub readme_path: PathBuf,
     pub images_path: PathBuf,
+    pub cover_path: PathBuf,
 }
 
 impl Album {
@@ -47,9 +48,14 @@ impl Album {
 
         let name = try_get_config!(config, "name");
         let author = try_get_config!(config, "author");
-        let host_path = try_get_config!(config, "host_path");
+        let mut host_path = try_get_config!(config, "host_path");
+        let cover_path = try_get_config!(config, "cover_path").parse().unwrap();
         let readme_path = try_get_config!(config, "readme").parse().unwrap();
-        let image_dir = try_get_config!(config, "image_dir").parse().unwrap();
+        let images_path = try_get_config!(config, "image_dir").parse().unwrap();
+
+        if !host_path.starts_with('/') {
+            host_path = format!("/{}", host_path);
+        }
 
         Ok(Album {
             path,
@@ -57,7 +63,8 @@ impl Album {
             author,
             host_path,
             readme_path,
-            images_path: image_dir,
+            cover_path,
+            images_path,
         })
     }
 }

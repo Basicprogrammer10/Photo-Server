@@ -1,0 +1,34 @@
+body {
+  font-family: Roboto, Helvetica, Arial, sans-serif;
+  background: #1F1F21;
+  color: #FFFFFF;
+}
+
+.readme {
+  margin: 5vw;
+  overflow-y: hidden;
+
+  & * {
+    position:relative;
+    z-index: 10;
+  }
+}
+
+.cover {
+  margin: 0;
+  width: 100vw;
+  transform: translate(-5vw, -5vw);
+  position: absolute;
+  z-index: 1;
+}
+
+.photos {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+}
+
+.img {
+  max-width: 255px;
+  padding: 7px;
+}
