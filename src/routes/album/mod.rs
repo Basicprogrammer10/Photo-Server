@@ -40,11 +40,17 @@ fn middleware(req: &Request) -> Option<Option<Response>> {
         }
 
         if path == format!("{}/photos", i.host_path) {
-            let files = fs::read_dir(i.path.join(i.images_path)).ok()?;
+            let mut files = fs::read_dir(i.path.join(i.images_path))
+                .ok()?
+                .map(|x| x.unwrap())
+                .collect::<Vec<_>>();
+
+            files.sort_by_key(|x| x.file_name());
+            // files.sort_by_key(|x| x.metadata().ok().unwrap().created().unwrap());
+
             let mut images = String::new();
 
             for file in files {
-                let file = file.ok()?;
                 let file_name = file.file_name().into_string().ok()?;
 
                 if IMAGE_FORMATS.contains(&file_name.split('.').last()?.to_lowercase().as_str()) {

@@ -5,6 +5,7 @@ body {
   margin: 0;
   overflow-x: hidden;
   height: 100%;
+  scroll-behavior: smooth;
 }
 
 a {
@@ -73,7 +74,7 @@ a {
 
 .downloadButton {
   opacity: 0;
-  transition: opacity 100ms ease-in;
+  transition: all 100ms ease-in;
   position: absolute;
   transform: translate(-30px, 235px);
   pointer-events: none;
@@ -96,7 +97,8 @@ a {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(0.9);
+  transition: transform 100ms ease-in;
 }
 .pop .img:hover {
   transform: translate(-50%, -50%);
