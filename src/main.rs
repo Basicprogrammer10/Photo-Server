@@ -63,8 +63,10 @@ fn main() {
             return None;
         }
 
+        let path = req.path.to_lowercase();
+
         for i in unsafe { ALBUMS.clone() }.unwrap() {
-            if req.path == i.host_path {
+            if path == i.host_path {
                 let resp = fs::read_to_string("data/template/album.html").unwrap();
                 let readme = fs::read_to_string(i.path.join(i.readme_path)).unwrap();
 
@@ -81,7 +83,7 @@ fn main() {
                 );
             }
 
-            if req.path == format!("{}/photos", i.host_path) {
+            if path == format!("{}/photos", i.host_path) {
                 let files = fs::read_dir(i.path.join(i.images_path)).unwrap();
                 let mut images = String::new();
 
@@ -101,7 +103,7 @@ fn main() {
                 );
             }
 
-            if req.path == format!("{}/cover", i.host_path) {
+            if path == format!("{}/cover", i.host_path) {
                 let image = fs::read(i.path.join(i.cover_path.clone())).unwrap();
 
                 return Some(Response::new().bytes(image).header(Header::new(
@@ -110,7 +112,7 @@ fn main() {
                 )));
             }
 
-            if req.path.starts_with(&format!("{}/photo/", i.host_path)) {
+            if path.starts_with(&format!("{}/photo/", i.host_path)) {
                 let image = req.path.splitn(2, "/photo/").last().unwrap();
                 let path = i.path.join(i.images_path).join(image);
                 let image_data = match fs::read(path.clone()) {

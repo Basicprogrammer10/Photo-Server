@@ -1,34 +1,51 @@
 body {
   font-family: Roboto, Helvetica, Arial, sans-serif;
-  background: #1F1F21;
-  color: #FFFFFF;
+  background: #1f1f21;
+  color: #ffffff;
+  margin: 0;
 }
 
 .readme {
-  margin: 5vw;
-  overflow-y: hidden;
+  margin: 0 0 6px 0;
+  overflow: hidden;
+  position: relative;
+  width: 100vw;
+  max-width: 100vw;
+  height: min-content;
+  min-height: 15vw;
+  font-size: 150%;
 
-  & * {
-    position:relative;
+  & *:not(img) {
+    position: relative;
+    padding: 10px 50px 0 50px;
     z-index: 10;
   }
 }
 
 .cover {
   margin: 0;
-  width: 100vw;
-  transform: translate(-5vw, -5vw);
   position: absolute;
-  z-index: 1;
+  // width: 100vw;
+
+  @media (max-aspect-ratio: 9/16) {
+    height: 100%;
+  }
+
+  @media (min-aspect-ratio: 9/16) {
+    width: 100vw;
+  }
+
 }
 
 .photos {
   display: flex;
-  flex-flow: row wrap;
+  flex-flow: wrap;
   align-items: center;
+  justify-content: center;
 }
 
 .img {
-  max-width: 255px;
-  padding: 7px;
+  padding: 5px;
+  height: 255px;
+  cursor: pointer;
 }
