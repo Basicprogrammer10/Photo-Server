@@ -12,6 +12,7 @@ pub const VERSION: &str = "0.1.0";
 pub const IMAGE_FORMATS: &[&str] = &["png", "jpg", "jpeg"];
 
 pub static mut ALBUMS: Option<Vec<Album>> = None;
+pub static mut LOGGING: bool = false;
 
 fn main() {
     println!("Starting ImgServer V{}\n", VERSION);
@@ -20,6 +21,8 @@ fn main() {
     let host = cfg.get_str("host").unwrap();
     let port = cfg.get::<u16>("port").unwrap();
     let album_path = cfg.get_str("album_path").unwrap();
+    let logging = cfg.get::<bool>("logging").unwrap();
+    unsafe { LOGGING = logging }
 
     let albums = match album::load_albums(album_path) {
         Some(i) => i,
