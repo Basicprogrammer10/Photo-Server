@@ -3,6 +3,8 @@ body {
   background: #1f1f21;
   color: #ffffff;
   margin: 0;
+  overflow-x: hidden;
+  height: 100%;
 }
 
 .readme {
@@ -35,18 +37,75 @@ body {
     width: 100vw;
   }
 }
+@media (aspect-ratio: 9/16) {
+  .cover {
+    width: 100vw;
+  }
+}
 
 .photos {
   display: flex;
   flex-flow: wrap;
   align-items: center;
   justify-content: center;
+  margin-bottom: 40px;
 }
 
 .img {
   padding: 5px;
   height: 255px;
+  border-radius: 10px;
+  transition: all 100ms;
   cursor: pointer;
+}
+.img:hover {
+  transform: scale(1.025);
+  filter: brightness(1.1);
+}
+
+.pop {
+  pointer-events: none;
+  display: block;
+  position: fixed;
+  background: rgba(0, 0, 0, 0.5);
+  transition: opacity 100ms ease-in;
+  opacity: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100%;
+}
+.pop .img {
+  padding: 0;
+  width: 87vw;
+  height: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.pop .img:hover {
+  transform: translate(-50%, -50%);
+  filter: brightness(1);
+}
+
+.footer {
+  background-color: #1a1a1d;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  display: inline-block;
+}
+.footer a {
+  color: #58a6ff;
+}
+.footer p {
+  margin: 15px;
+  margin-left: 0;
+}
+.footer * {
+  padding: 10px 0 10px 0;
 }
 
 /*# sourceMappingURL=index.css.map */

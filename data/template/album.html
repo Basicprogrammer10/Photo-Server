@@ -3,16 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css"
+    />
     <link rel="stylesheet" href="/index.css" />
     <script defer src="/album/index.js"></script>
     <title>{{NAME}}</title>
   </head>
   <body>
+    <div class="pop"></div>
+
     <div class="readme">
       <img src="{{COVER}}" class="cover" />
       {{README}}
     </div>
 
     <div class="photos"></div>
+
+    <div class="footer">
+      Connor Slade · 2021 ·
+      <a href="https://github.com/Basicprogrammer10/Photo-Server/">
+        <i class="cat fa fa-github"></i> Code
+      </a>
+    </div>
   </body>
 </html>
