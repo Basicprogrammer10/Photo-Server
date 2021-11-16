@@ -25,9 +25,9 @@ a {
   min-height: 15vw;
   font-size: 150%;
 
-  & *:not(img) {
+  & .content {
     position: relative;
-    padding: 10px 50px 0 50px;
+    margin: 10px 50px 0 50px;
     z-index: 10;
   }
 }
