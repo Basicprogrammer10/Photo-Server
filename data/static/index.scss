@@ -70,6 +70,14 @@ a {
   }
 }
 
+.downloadButton {
+  opacity: 0;
+  transition: opacity 100ms ease-in;
+  position: absolute;
+  transform: translate(-30px, 235px);
+  pointer-events: none;
+}
+
 .pop {
   pointer-events: none;
   display: block;

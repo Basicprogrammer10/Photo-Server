@@ -1,15 +1,37 @@
-let pop = document.querySelectorAll(".pop")[0];
-// let images = [];
+const pop = document.querySelectorAll(".pop")[0];
+const downloadButtons = document.querySelectorAll(".downloadButton");
+let images = [];
 
 fetch(`${window.location.pathname}/photos`)
   .then((r) => r.json())
   .then((r) =>
-    r.forEach((item, i) => {
+    r.forEach((item) => {
       images.push(`${window.location.pathname}/photo/${item}`);
+
+      let div = document.createElement("div");
+
+      let icon = document.createElement("i");
+      icon.classList.add("fa");
+      icon.classList.add("fa-download");
+      icon.classList.add("downloadButton");
 
       let img = document.createElement("img");
       img.src = `${window.location.pathname}/photo/${item}`;
       img.classList.add("img");
+
+      icon.addEventListener("click", () => {
+        download(item, `${window.location.pathname}/photo/${item}`);
+      });
+
+      img.addEventListener("mouseover", () => {
+        icon.style.opacity = 1;
+        icon.style.pointerEvents = "auto";
+      });
+
+      img.addEventListener("mouseout", () => {
+        icon.style.opacity = 0;
+        icon.style.pointerEvents = "none";
+      });
 
       img.addEventListener("click", () => {
         pop.innerHTML = img.outerHTML;
@@ -23,7 +45,9 @@ fetch(`${window.location.pathname}/photos`)
         document.body.style.overflow = "hidden";
       });
 
-      document.querySelectorAll(".photos")[0].appendChild(img);
+      div.appendChild(img);
+      div.appendChild(icon);
+      document.querySelectorAll(".photos")[0].appendChild(div);
     })
   );
 
@@ -34,10 +58,15 @@ pop.addEventListener("click", () => {
   document.body.style.overflowX = "hidden";
 });
 
-// window.addEventListener("keydown", (e) => {
-//   if (e.key === "ArrowLeft") {
-//   }
-//
-//   if (e.key === "ArrowRight") {
-//   }
-// });
+function download(filename, url) {
+  let element = document.createElement("a");
+  element.setAttribute("href", url);
+  element.setAttribute("download", filename);
+
+  element.style.display = "none";
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
