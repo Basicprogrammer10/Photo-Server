@@ -45,7 +45,9 @@ name = "photo_server"
 version = "0.1.0"
 dependencies = [
  "afire",
+ "lazy_static",
  "markdown",
+ "regex",
  "simple_config_parser",
 ]
 
