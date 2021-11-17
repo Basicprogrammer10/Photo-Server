@@ -5,8 +5,8 @@ use afire::{Method, Request, Response, Server};
 use crate::ALBUMS;
 use crate::LOGGING;
 
-mod album;
 mod cover;
+mod page;
 mod photo;
 mod photos;
 
@@ -39,7 +39,7 @@ pub fn attach(server: &mut Server) {
                 },
                 req.address.split(':').next().unwrap_or(&req.address),
                 req.method,
-                path_str(req.path.clone()).unwrap_or(req.path.clone())
+                path_str(req.path.clone()).unwrap_or_else(|| req.path.clone())
             );
         }
 
@@ -56,7 +56,7 @@ fn middleware(req: &Request) -> Option<Option<Response>> {
 
     for i in unsafe { ALBUMS.clone() }? {
         if path == i.host_path {
-            return Some(album::album(i));
+            return Some(page::page(i));
         }
 
         if path == format!("{}/photos", i.host_path) {

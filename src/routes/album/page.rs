@@ -8,7 +8,7 @@ use crate::Template;
 /// Main page for an album
 ///
 /// This templates in Name, Cover Image and Readme
-pub fn album(i: Album) -> Option<Response> {
+pub fn page(i: Album) -> Option<Response> {
     let resp = fs::read_to_string("data/template/album.html").ok()?;
     let readme = fs::read_to_string(i.path.join(i.readme_path)).ok()?;
 
@@ -18,9 +18,9 @@ pub fn album(i: Album) -> Option<Response> {
         .template("README", markdown::to_html(&readme))
         .build();
 
-    return Some(
+    Some(
         Response::new()
             .text(resp)
             .header(Header::new("Content-Type", "text/html")),
-    );
+    )
 }

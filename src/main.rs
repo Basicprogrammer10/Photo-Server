@@ -4,6 +4,7 @@ use afire::Server;
 use simple_config_parser::Config;
 
 mod album;
+mod cache;
 mod routes;
 mod serve_static;
 mod template;
