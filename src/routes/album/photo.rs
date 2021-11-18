@@ -16,9 +16,9 @@ pub fn photo(i: Album, req: &Request) -> Option<Response> {
 
     let file_type = image_type(path.as_path().extension()?.to_str()?);
 
-    return Some(
+    Some(
         Response::new()
             .bytes(image_data)
             .header(Header::new("Content-Type", file_type)),
-    );
+    )
 }

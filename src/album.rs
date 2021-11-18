@@ -74,11 +74,14 @@ where
     T: Into<PathBuf>,
 {
     let mut all_files = Vec::new();
-    let files = fs::read_dir(base_path.into()).ok()?;
+    let mut files = fs::read_dir(base_path.into())
+        .ok()?
+        .map(|x| x.unwrap())
+        .collect::<Vec<_>>();
 
-    for file in files {
-        let file = file.ok()?;
+    files.sort_by_key(|x| x.metadata().unwrap().created().unwrap());
 
+    for file in files.iter().rev() {
         if !file.file_name().to_str()?.starts_with("album_") {
             continue;
         }

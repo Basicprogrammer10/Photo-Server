@@ -21,8 +21,8 @@ pub fn attach(server: &mut Server) {
             .template("ALBUMS", format!("<ul>{}</ul>", albums))
             .build();
 
-        return Response::new()
+        Response::new()
             .text(resp)
-            .header(Header::new("Content-Type", "text/html"));
+            .header(Header::new("Content-Type", "text/html"))
     });
 }

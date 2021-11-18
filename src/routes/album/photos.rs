@@ -33,7 +33,7 @@ pub fn photos(i: Album) -> Option<Response> {
             let x_find = END_NUM_REGEX.find(x);
             let y_find = END_NUM_REGEX.find(y);
 
-            if !x_find.is_some() || !y_find.is_some() {
+            if x_find.is_none() || y_find.is_none() {
                 return x.cmp(y);
             }
 
