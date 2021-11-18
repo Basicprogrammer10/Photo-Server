@@ -19,7 +19,7 @@ pub enum AlbumError {
     ConfigParseError(simple_config_parser::ConfigError),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Album {
     pub path: PathBuf,
     pub name: String,
