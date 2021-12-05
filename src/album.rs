@@ -2,6 +2,7 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
+use image::imageops::FilterType;
 use simple_config_parser::Config;
 
 macro_rules! try_get_config {
@@ -66,6 +67,28 @@ impl Album {
             cover_path,
             images_path,
         })
+    }
+
+    pub fn gen_thumbs(&self) -> Option<()> {
+        let cache = self.path.join(".thumbs");
+        let files = fs::read_dir(self.path.join(self.clone().images_path))
+            .ok()?
+            .map(|x| x.unwrap())
+            .collect::<Vec<_>>();
+
+        if !cache.exists() {
+            fs::create_dir(&cache).ok()?;
+        }
+
+        for file in files {
+            let path = file.path();
+            let img = image::open(&path)
+                .unwrap()
+                .resize(u32::MAX, 255, FilterType::Triangle);
+            img.save(cache.join(path.file_name()?)).unwrap();
+        }
+
+        Some(())
     }
 }
 

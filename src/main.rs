@@ -11,7 +11,7 @@ mod template;
 use album::Album;
 use template::Template;
 
-pub const VERSION: &str = "0.1.0";
+pub const VERSION: &str = "0.2.0";
 pub const IMAGE_FORMATS: &[&str] = &["png", "jpg", "jpeg"];
 
 pub static mut ALBUMS: Option<Vec<Album>> = None;
@@ -34,6 +34,7 @@ fn main() {
 
     println!("[*] Loaded {} Albums", albums.len());
     for i in 0..albums.len() {
+        // albums[i].gen_thumbs().unwrap();
         if i < albums.len() - 1 {
             println!(" ├── {}: {}", albums[i].name, &albums[i].host_path);
             continue;

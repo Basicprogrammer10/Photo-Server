@@ -6,7 +6,7 @@ fetch(`${window.location.pathname}/photos`)
   .then((r) => r.json())
   .then((r) =>
     r.forEach((item) => {
-      images.push(`${window.location.pathname}/photo/${item}`);
+      images.push(`${window.location.pathname}/thumb/${item}`);
 
       let div = document.createElement("div");
 
@@ -16,7 +16,7 @@ fetch(`${window.location.pathname}/photos`)
       icon.classList.add("downloadButton");
 
       let img = document.createElement("img");
-      img.src = `${window.location.pathname}/photo/${item}`;
+      img.src = `${window.location.pathname}/thumb/${item}`;
       img.classList.add("img");
 
       icon.addEventListener("click", () => {
@@ -36,6 +36,10 @@ fetch(`${window.location.pathname}/photos`)
       });
 
       img.addEventListener("click", () => {
+        let img = document.createElement("img");
+        img.src = `${window.location.pathname}/photo/${item}`;
+        img.classList.add("img");
+
         pop.innerHTML = img.outerHTML;
         pop.style.opacity = 1;
         pop.style.pointerEvents = "all";

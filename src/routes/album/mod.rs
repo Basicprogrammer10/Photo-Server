@@ -9,6 +9,7 @@ mod cover;
 mod page;
 mod photo;
 mod photos;
+mod thumb;
 
 const TIME_UNITS: &[&str] = &["μs", "ms", "s"];
 
@@ -70,6 +71,10 @@ fn middleware(req: &Request) -> Option<Option<Response>> {
         if path.starts_with(&format!("{}/photo/", i.host_path)) {
             return Some(photo::photo(i, req));
         }
+
+        if path.starts_with(&format!("{}/thumb/", i.host_path)) {
+            return Some(thumb::photo(i, req));
+        }
     }
 
     Some(None)
@@ -111,6 +116,7 @@ fn path_str(path: String) -> Option<String> {
                 "photos" => 34,
                 "cover" => 34,
                 "photo" => 34,
+                "thumb" => 34,
                 _ => 33,
             }
             .to_string(),
