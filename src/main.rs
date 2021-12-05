@@ -34,7 +34,11 @@ fn main() {
 
     println!("[*] Loaded {} Albums", albums.len());
     for i in 0..albums.len() {
-        // albums[i].gen_thumbs().unwrap();
+        if !albums[i].check_thumbs().unwrap() {
+            println!("[*] Genarateing Thumbnails for `{}`", albums[i].name);
+            albums[i].gen_thumbs().unwrap();
+        }
+
         if i < albums.len() - 1 {
             println!(" ├── {}: {}", albums[i].name, &albums[i].host_path);
             continue;

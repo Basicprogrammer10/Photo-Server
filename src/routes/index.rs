@@ -12,8 +12,8 @@ pub fn attach(server: &mut Server) {
         let mut albums = String::new();
         for i in unsafe { ALBUMS.clone() }.unwrap() {
             albums.push_str(&format!(
-                r#"<li><a href="{}">{}</a></li>"#,
-                i.host_path, i.name
+                r#"<li><a href="{}">{} ({})</a></li>"#,
+                i.host_path, i.name, i.images
             ));
         }
 

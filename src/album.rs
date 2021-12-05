@@ -1,4 +1,6 @@
+use std::collections::hash_map::DefaultHasher;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::io;
 use std::path::PathBuf;
 
@@ -18,6 +20,7 @@ macro_rules! try_get_config {
 pub enum AlbumError {
     ConfigError(io::Error),
     ConfigParseError(simple_config_parser::ConfigError),
+    IoError(),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -29,6 +32,7 @@ pub struct Album {
     pub readme_path: PathBuf,
     pub images_path: PathBuf,
     pub cover_path: PathBuf,
+    pub images: usize,
 }
 
 impl Album {
@@ -58,6 +62,11 @@ impl Album {
             host_path = format!("/{}", host_path);
         }
 
+        let images = match fs::read_dir(path.join(&images_path)) {
+            Ok(i) => i.count(),
+            Err(_) => return Err(AlbumError::IoError()),
+        };
+
         Ok(Album {
             path,
             name,
@@ -66,6 +75,7 @@ impl Album {
             readme_path,
             cover_path,
             images_path,
+            images,
         })
     }
 
@@ -80,6 +90,14 @@ impl Album {
             fs::create_dir(&cache).ok()?;
         }
 
+        let mut s = DefaultHasher::new();
+        files
+            .iter()
+            .map(|x| x.path())
+            .collect::<Vec<PathBuf>>()
+            .hash(&mut s);
+        let hash = s.finish();
+
         for file in files {
             let path = file.path();
             let img = image::open(&path)
@@ -88,7 +106,36 @@ impl Album {
             img.save(cache.join(path.file_name()?)).unwrap();
         }
 
+        fs::write(cache.join(".lock"), format!("{:x}", hash)).ok()?;
+
         Some(())
+    }
+
+    pub fn check_thumbs(&self) -> Option<bool> {
+        let cache = self.path.join(".thumbs");
+        let files = fs::read_dir(self.path.join(self.clone().images_path))
+            .ok()?
+            .map(|x| x.unwrap())
+            .collect::<Vec<_>>();
+
+        let lock = match fs::read_to_string(cache.join(".lock")) {
+            Ok(i) => i,
+            Err(_) => return Some(false),
+        };
+
+        let mut s = DefaultHasher::new();
+        files
+            .iter()
+            .map(|x| x.path())
+            .collect::<Vec<PathBuf>>()
+            .hash(&mut s);
+        let hash = s.finish();
+
+        if lock == format!("{:x}", hash) {
+            return Some(true);
+        }
+
+        Some(false)
     }
 }
 
