@@ -35,8 +35,13 @@ fn main() {
     println!("[*] Loaded {} Albums", albums.len());
     for i in 0..albums.len() {
         if !albums[i].check_thumbs().unwrap() {
-            println!("[*] Genarateing Thumbnails for `{}`", albums[i].name);
+            println!(" ├── ! Genarateing Thumbnails for `{}`", albums[i].name);
             albums[i].gen_thumbs().unwrap();
+        }
+
+        if !albums[i].check_previews().unwrap() {
+            println!(" ├── ! Genarateing Previews for `{}`", albums[i].name);
+            albums[i].gen_previews().unwrap();
         }
 
         if i < albums.len() - 1 {

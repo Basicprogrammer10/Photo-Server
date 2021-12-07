@@ -137,6 +137,65 @@ impl Album {
 
         Some(false)
     }
+
+    pub fn gen_previews(&self) -> Option<()> {
+        let cache = self.path.join(".previews");
+        let files = fs::read_dir(self.path.join(self.clone().images_path))
+            .ok()?
+            .map(|x| x.unwrap())
+            .collect::<Vec<_>>();
+
+        if !cache.exists() {
+            fs::create_dir(&cache).ok()?;
+        }
+
+        let mut s = DefaultHasher::new();
+        files
+            .iter()
+            .map(|x| x.path())
+            .collect::<Vec<PathBuf>>()
+            .hash(&mut s);
+        let hash = s.finish();
+
+        for file in files {
+            let path = file.path();
+            let img = image::open(&path)
+                .unwrap()
+                .resize(1920, 1080, FilterType::Triangle);
+            img.save(cache.join(path.file_name()?)).unwrap();
+        }
+
+        fs::write(cache.join(".lock"), format!("{:x}", hash)).ok()?;
+
+        Some(())
+    }
+
+    pub fn check_previews(&self) -> Option<bool> {
+        let cache = self.path.join(".previews");
+        let files = fs::read_dir(self.path.join(self.clone().images_path))
+            .ok()?
+            .map(|x| x.unwrap())
+            .collect::<Vec<_>>();
+
+        let lock = match fs::read_to_string(cache.join(".lock")) {
+            Ok(i) => i,
+            Err(_) => return Some(false),
+        };
+
+        let mut s = DefaultHasher::new();
+        files
+            .iter()
+            .map(|x| x.path())
+            .collect::<Vec<PathBuf>>()
+            .hash(&mut s);
+        let hash = s.finish();
+
+        if lock == format!("{:x}", hash) {
+            return Some(true);
+        }
+
+        Some(false)
+    }
 }
 
 pub fn load_albums<T>(base_path: T) -> Option<Vec<Album>>

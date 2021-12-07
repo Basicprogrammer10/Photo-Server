@@ -9,6 +9,7 @@ mod cover;
 mod page;
 mod photo;
 mod photos;
+mod preview;
 mod thumb;
 
 const TIME_UNITS: &[&str] = &["μs", "ms", "s"];
@@ -72,6 +73,10 @@ fn middleware(req: &Request) -> Option<Option<Response>> {
             return Some(photo::photo(i, req));
         }
 
+        if path.starts_with(&format!("{}/preview/", i.host_path)) {
+            return Some(preview::photo(i, req));
+        }
+
         if path.starts_with(&format!("{}/thumb/", i.host_path)) {
             return Some(thumb::photo(i, req));
         }
@@ -81,7 +86,7 @@ fn middleware(req: &Request) -> Option<Option<Response>> {
 }
 
 fn image_type(ending: &str) -> &str {
-    match ending {
+    match ending.to_lowercase().as_str() {
         "png" => "image/png",
         "jpg" => "image/jpeg",
         "jpeg" => "image/jpeg",

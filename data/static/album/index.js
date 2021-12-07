@@ -37,7 +37,7 @@ fetch(`${window.location.pathname}/photos`)
 
       img.addEventListener("click", () => {
         let img = document.createElement("img");
-        img.src = `${window.location.pathname}/photo/${item}`;
+        img.src = `${window.location.pathname}/preview/${item}`;
         img.classList.add("img");
 
         pop.innerHTML = img.outerHTML;

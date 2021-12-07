@@ -7,12 +7,12 @@ use crate::album::Album;
 
 /// Get an Image Thumbnail
 pub fn photo(i: Album, req: &Request) -> Option<Response> {
-    let image = req.path.splitn(2, "/thumb/").last()?.replace("%20", " ");
-    let cache = i.path.join(".thumbs");
+    let image = req.path.splitn(2, "/preview/").last()?.replace("%20", " ");
+    let cache = i.path.join(".previews");
 
-    if !i.check_thumbs()? {
-        println!("[*] Genarateing Thumbnails for `{}`", i.name);
-        i.gen_thumbs()?;
+    if !i.check_previews()? {
+        println!("[*] Genarateing Previews for `{}`", i.name);
+        i.gen_previews()?;
         println!("[*] Done!");
     }
 
