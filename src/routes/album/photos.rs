@@ -17,16 +17,13 @@ lazy_static! {
 ///
 /// Format that as a JSON response
 pub fn photos(i: Album) -> Option<Response> {
-    match CACHE.read().unwrap().get(i.clone()) {
-        Some(i) => {
-            return Some(
-                Response::new()
-                    .text(i)
-                    .header("Content-Type", "application/json")
-                    .header("X-Cached", "true"),
-            )
-        }
-        None => {}
+    if let Some(i) = CACHE.read().unwrap().get(i.clone()) {
+        return Some(
+            Response::new()
+                .text(i)
+                .header("Content-Type", "application/json")
+                .header("X-Cached", "true"),
+        );
     };
 
     let mut files = fs::read_dir(i.path.join(i.clone().images_path))
@@ -47,9 +44,9 @@ pub fn photos(i: Album) -> Option<Response> {
     let text = format!(r#"[{}]"#, &images[..images.len() - 1]);
     CACHE.write().unwrap().update(i, text.clone());
 
-    return Some(
+    Some(
         Response::new()
             .text(text)
             .header("Content-Type", "application/json"),
-    );
+    )
 }

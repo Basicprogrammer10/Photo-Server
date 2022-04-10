@@ -9,7 +9,7 @@ const DATA_DIR: &str = "./data/static";
 
 pub fn attach(server: &mut afire::Server) {
     server.route(Method::GET, "**", |req| {
-        let mut path = format!("{}{}", DATA_DIR, req.path.replace("/..", ""));
+        let mut path = format!("{}{}", DATA_DIR, safe_path(req.path.to_owned()));
 
         // Add Index.html if path ends with /
         if path.ends_with('/') {
@@ -43,6 +43,14 @@ pub fn attach(server: &mut afire::Server) {
                 .header("Content-Type", "text/html"),
         }
     });
+}
+
+#[inline]
+fn safe_path(mut path: String) -> String {
+    while path.contains("/..") {
+        path = path.replace("/..", "");
+    }
+    path
 }
 
 /// Get the type MMIE content type of a file from its extension

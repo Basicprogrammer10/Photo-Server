@@ -16,16 +16,16 @@ macro_rules! try_get_config {
     ($config:expr, $key:expr) => {{
         match $config.get_str($key) {
             Ok(i) => i,
-            Err(e) => return Err(AlbumError::ConfigParseError(e)),
+            Err(e) => return Err(AlbumError::ConfigParse(e)),
         }
     }};
 }
 
 #[derive(Debug)]
 pub enum AlbumError {
-    ConfigError(io::Error),
-    ConfigParseError(simple_config_parser::ConfigError),
-    IoError(),
+    Config(io::Error),
+    ConfigParse(simple_config_parser::ConfigError),
+    Io(),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -48,12 +48,12 @@ impl Album {
         let path = path.into();
         let config = match fs::read_to_string(path.join("config.cfg")) {
             Ok(i) => i,
-            Err(e) => return Err(AlbumError::ConfigError(e)),
+            Err(e) => return Err(AlbumError::Config(e)),
         };
 
         let config = match Config::new().text(config) {
             Ok(i) => i,
-            Err(e) => return Err(AlbumError::ConfigParseError(e)),
+            Err(e) => return Err(AlbumError::ConfigParse(e)),
         };
 
         let name = try_get_config!(config, "name");
@@ -69,7 +69,7 @@ impl Album {
 
         let images = match fs::read_dir(path.join(&images_path)) {
             Ok(i) => i.count(),
-            Err(_) => return Err(AlbumError::IoError()),
+            Err(_) => return Err(AlbumError::Io()),
         };
 
         Ok(Album {
