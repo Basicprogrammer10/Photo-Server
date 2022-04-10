@@ -16,9 +16,9 @@ checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
 
 [[package]]
 name = "afire"
-version = "0.2.2"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae889ab70ab588b8cb863e96cbd15b7d9d94712da62a9d0e608f319dee0eb79a"
+checksum = "a74e3a366d2ebe27fc33ff09aa301b23c1b86e3a5b49f6851d0e2fa71f322edc"
 
 [[package]]
 name = "aho-corasick"

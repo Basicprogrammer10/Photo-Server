@@ -1,2 +1,3 @@
 /target
-/data/albums/album_*
+/data/albums/*
+!/data/albums/help.md

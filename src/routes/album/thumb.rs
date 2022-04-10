@@ -1,6 +1,6 @@
 use std::fs;
 
-use afire::{Header, Request, Response};
+use afire::{Request, Response};
 
 use super::image_type;
 use crate::album::Album;
@@ -27,6 +27,6 @@ pub fn photo(i: Album, req: &Request) -> Option<Response> {
     Some(
         Response::new()
             .bytes(image_data)
-            .header(Header::new("Content-Type", file_type)),
+            .header("Content-Type", file_type),
     )
 }

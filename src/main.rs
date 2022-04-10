@@ -58,6 +58,6 @@ fn main() {
     serve_static::attach(&mut server);
     routes::attach(&mut server);
 
-    println!("\nStarting Server {}:{}", server.ip_string(), server.port);
-    server.start().unwrap();
+    println!("\nStarting Server {}:{}", server.ip, server.port);
+    server.start_threaded(16).unwrap();
 }

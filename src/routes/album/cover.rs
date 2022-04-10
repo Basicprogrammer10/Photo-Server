@@ -1,6 +1,6 @@
 use std::fs;
 
-use afire::{Header, Response};
+use afire::Response;
 
 use super::image_type;
 use crate::album::Album;
@@ -11,8 +11,8 @@ pub fn cover(i: Album) -> Option<Response> {
     if !path.exists() {}
     let image = fs::read(path).ok()?;
 
-    return Some(Response::new().bytes(image).header(Header::new(
+    return Some(Response::new().bytes(image).header(
         "Content-Type",
         image_type(i.cover_path.extension()?.to_str()?),
-    )));
+    ));
 }

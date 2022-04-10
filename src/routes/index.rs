@@ -1,6 +1,6 @@
 use std::fs;
 
-use afire::{Header, Method, Response, Server};
+use afire::{Method, Response, Server};
 
 use crate::Template;
 use crate::ALBUMS;
@@ -23,6 +23,6 @@ pub fn attach(server: &mut Server) {
 
         Response::new()
             .text(resp)
-            .header(Header::new("Content-Type", "text/html"))
+            .header("Content-Type", "text/html")
     });
 }

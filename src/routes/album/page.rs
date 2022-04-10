@@ -1,6 +1,6 @@
 use std::fs;
 
-use afire::{Header, Response};
+use afire::Response;
 
 use crate::album::Album;
 use crate::Template;
@@ -21,6 +21,6 @@ pub fn page(i: Album) -> Option<Response> {
     Some(
         Response::new()
             .text(resp)
-            .header(Header::new("Content-Type", "text/html")),
+            .header("Content-Type", "text/html"),
     )
 }

@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2021"
 
 [dependencies]
-afire = "0.2.2"
+afire = "1.1.0"
 simple_config_parser = "1.0.0"
 
 markdown = "0.3"

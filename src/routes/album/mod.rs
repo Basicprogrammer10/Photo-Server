@@ -1,6 +1,9 @@
 use std::time::Instant;
 
-use afire::{Method, Request, Response, Server};
+use afire::{
+    middleware::{MiddleRequest, Middleware},
+    Method, Request, Response, Server,
+};
 
 use crate::ALBUMS;
 use crate::LOGGING;
@@ -14,11 +17,13 @@ mod thumb;
 
 const TIME_UNITS: &[&str] = &["μs", "ms", "s"];
 
-pub fn attach(server: &mut Server) {
-    server.middleware(Box::new(|req| {
+struct Handler;
+
+impl Middleware for Handler {
+    fn pre(&self, req: Request) -> MiddleRequest {
         let start = Instant::now();
 
-        let res = match middleware(req) {
+        let res = match middleware(&req) {
             Some(i) => i,
             None => Some(
                 Response::new()
@@ -37,7 +42,7 @@ pub fn attach(server: &mut Server) {
                 }
                 /* im sorry */
                 else {
-                    "XXXXX".to_string()
+                    "XXXXX".to_owned()
                 },
                 req.address.split(':').next().unwrap_or(&req.address),
                 req.method,
@@ -45,8 +50,15 @@ pub fn attach(server: &mut Server) {
             );
         }
 
-        res
-    }));
+        match res {
+            Some(i) => MiddleRequest::Send(i),
+            None => MiddleRequest::Continue,
+        }
+    }
+}
+
+pub fn attach(server: &mut Server) {
+    Handler.attach(server);
 }
 
 fn middleware(req: &Request) -> Option<Option<Response>> {
@@ -118,10 +130,7 @@ fn path_str(path: String) -> Option<String> {
         new_path.push_str("\x1b[");
         new_path.push_str(
             &match i {
-                "photos" => 34,
-                "cover" => 34,
-                "photo" => 34,
-                "thumb" => 34,
+                "photos" | "cover" | "photo" | "thumb" | "preview" => 34,
                 _ => 33,
             }
             .to_string(),

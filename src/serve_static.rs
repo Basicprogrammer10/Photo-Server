@@ -8,7 +8,7 @@ use crate::VERSION;
 const DATA_DIR: &str = "./data/static";
 
 pub fn attach(server: &mut afire::Server) {
-    server.all(|req| {
+    server.route(Method::GET, "**", |req| {
         let mut path = format!("{}{}", DATA_DIR, req.path.replace("/..", ""));
 
         // Add Index.html if path ends with /
@@ -26,7 +26,7 @@ pub fn attach(server: &mut afire::Server) {
             // If its found send it as response
             Ok(content) => Response::new()
                 .bytes(content)
-                .header(Header::new("Content-Type", get_type(&path))),
+                .header("Content-Type", get_type(&path)),
 
             // If not send 404.html
             Err(_) => Response::new()
@@ -40,7 +40,7 @@ pub fn attach(server: &mut afire::Server) {
                     .template("PAGE", req.path)
                     .build(),
                 )
-                .header(Header::new("Content-Type", "text/html")),
+                .header("Content-Type", "text/html"),
         }
     });
 }
