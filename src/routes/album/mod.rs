@@ -115,7 +115,7 @@ fn time_unit(time: u128) -> String {
         time /= 1000;
     }
 
-    return format!("{:0>3}{: <2}", time, TIME_UNITS.last().unwrap());
+    format!("{:0>3}{: <2}", time, TIME_UNITS.last().unwrap())
 }
 
 fn path_str(path: String) -> Option<String> {

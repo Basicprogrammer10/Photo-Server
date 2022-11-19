@@ -4,12 +4,18 @@ use std::hash::{Hash, Hasher};
 use std::io;
 use std::path::PathBuf;
 
-use image::imageops::FilterType;
+use fast_image_resize as fir;
+use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use simple_config_parser::Config;
 
+const THUMBNAIL_SIZE: u32 = 255;
+const PREVIEW_SIZE: (u32, u32) = (1920, 1080);
+
 lazy_static! {
     static ref END_NUM_REGEX: Regex = Regex::new(r#"[0-9]+\..+"#).unwrap();
+    static ref PROGRESS_STYLE: ProgressStyle =
+        ProgressStyle::with_template(" └── [{bar:50}] ETA: {eta}, {per_sec}").unwrap();
 }
 
 macro_rules! try_get_config {
@@ -104,12 +110,28 @@ impl Album {
             .hash(&mut s);
         let hash = s.finish();
 
+        let bar = ProgressBar::new(files.len() as u64);
+        bar.set_style(PROGRESS_STYLE.to_owned());
+
         for file in files {
             let path = file.path();
-            let img = image::open(&path)
-                .unwrap()
-                .resize(u32::MAX, 255, FilterType::Triangle);
-            img.save(cache.join(path.file_name()?)).unwrap();
+            let img = image::open(&path).unwrap();
+            let dst_image = crate::image::scale_image(
+                &img,
+                u32::MAX,
+                THUMBNAIL_SIZE,
+                fir::ResizeAlg::Convolution(fir::FilterType::Lanczos3),
+            );
+
+            image::save_buffer(
+                cache.join(path.file_name()?),
+                dst_image.buffer(),
+                dst_image.width().get(),
+                dst_image.height().get(),
+                img.color(),
+            )
+            .unwrap();
+            bar.inc(1);
         }
 
         fs::write(cache.join(".lock"), format!("{:x}", hash)).ok()?;
@@ -165,12 +187,27 @@ impl Album {
             .hash(&mut s);
         let hash = s.finish();
 
+        let bar = ProgressBar::new(files.len() as u64);
+        bar.set_style(PROGRESS_STYLE.to_owned());
         for file in files {
             let path = file.path();
-            let img = image::open(&path)
-                .unwrap()
-                .resize(1920, 1080, FilterType::Triangle);
-            img.save(cache.join(path.file_name()?)).unwrap();
+            let img = image::open(&path).unwrap();
+            let dst_image = crate::image::scale_image(
+                &img,
+                PREVIEW_SIZE.0,
+                PREVIEW_SIZE.1,
+                fir::ResizeAlg::Convolution(fir::FilterType::Lanczos3),
+            );
+
+            image::save_buffer(
+                cache.join(path.file_name()?),
+                dst_image.buffer(),
+                dst_image.width().get(),
+                dst_image.height().get(),
+                img.color(),
+            )
+            .unwrap();
+            bar.inc(1);
         }
 
         fs::write(cache.join(".lock"), format!("{:x}", hash)).ok()?;
@@ -237,7 +274,7 @@ where
 /// Only does by num if the name is formatted like this
 /// <NAME><NUM>.<EXT>
 /// EX: dog-10.png
-pub fn sort_photos(photos: &mut Vec<DirEntry>) {
+pub fn sort_photos(photos: &mut [DirEntry]) {
     photos.sort_by(|x, y| {
         let x = x.path();
         let y = y.path();

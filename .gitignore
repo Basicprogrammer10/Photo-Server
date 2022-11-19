@@ -1,3 +1,4 @@
 /target
 /data/albums/*
 !/data/albums/help.md
+ngnix.conf

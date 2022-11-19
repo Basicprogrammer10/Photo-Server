@@ -5,6 +5,7 @@ use simple_config_parser::Config;
 
 mod album;
 mod cache;
+mod image;
 mod routes;
 mod serve_static;
 mod template;
