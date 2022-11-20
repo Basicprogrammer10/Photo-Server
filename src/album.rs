@@ -1,10 +1,11 @@
-use std::collections::hash_map::DefaultHasher;
+use std::fmt::{Display, Formatter};
 use std::fs::{self, DirEntry};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use fast_image_resize as fir;
+use hashbrown::{HashMap, HashSet};
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use simple_config_parser::Config;
@@ -18,22 +19,6 @@ lazy_static! {
         ProgressStyle::with_template(" └── [{bar:50}] ETA: {eta}, {per_sec}").unwrap();
 }
 
-macro_rules! try_get_config {
-    ($config:expr, $key:expr) => {{
-        match $config.get_str($key) {
-            Ok(i) => i,
-            Err(e) => return Err(AlbumError::ConfigParse(e)),
-        }
-    }};
-}
-
-#[derive(Debug)]
-pub enum AlbumError {
-    Config(io::Error),
-    ConfigParse(simple_config_parser::ConfigError),
-    Io(),
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Album {
     pub path: PathBuf,
@@ -44,6 +29,25 @@ pub struct Album {
     pub images_path: PathBuf,
     pub cover_path: PathBuf,
     pub images: usize,
+}
+
+#[derive(Debug)]
+pub struct ImageUpdates {
+    added: HashSet<PathBuf>,
+    removed: HashSet<PathBuf>,
+}
+
+#[derive(Debug)]
+pub enum AlbumError {
+    Config(io::Error),
+    ConfigParse(simple_config_parser::ConfigError),
+    Io(),
+}
+
+#[derive(Clone, Copy)]
+pub enum ProcessType {
+    Preview,
+    Thumbnail,
 }
 
 impl Album {
@@ -62,12 +66,12 @@ impl Album {
             Err(e) => return Err(AlbumError::ConfigParse(e)),
         };
 
-        let name = try_get_config!(config, "name");
-        let author = try_get_config!(config, "author");
-        let mut host_path = try_get_config!(config, "host_path");
-        let cover_path = try_get_config!(config, "cover_path").parse().unwrap();
-        let readme_path = try_get_config!(config, "readme").parse().unwrap();
-        let images_path = try_get_config!(config, "image_dir").parse().unwrap();
+        let name = try_config(&config, "name")?;
+        let author = try_config(&config, "author")?;
+        let mut host_path = try_config(&config, "host_path")?;
+        let cover_path = try_config(&config, "cover_path")?.parse().unwrap();
+        let readme_path = try_config(&config, "readme")?.parse().unwrap();
+        let images_path = try_config(&config, "image_dir")?.parse().unwrap();
 
         if !host_path.starts_with('/') {
             host_path = format!("/{}", host_path);
@@ -90,8 +94,10 @@ impl Album {
         })
     }
 
-    pub fn gen_thumbs(&self) -> Option<()> {
-        let cache = self.path.join(".thumbs");
+    pub fn gen_cache(&self, updates: ImageUpdates, check_type: ProcessType) -> Option<()> {
+        let cache = self.path.join(check_type.to_path());
+        let image_size = check_type.to_image_size();
+        // let mut hash = Vec::new();
         let mut files = fs::read_dir(self.path.join(self.clone().images_path))
             .ok()?
             .map(|x| x.unwrap())
@@ -102,29 +108,26 @@ impl Album {
             fs::create_dir(&cache).ok()?;
         }
 
-        let mut s = DefaultHasher::new();
-        files
-            .iter()
-            .map(|x| x.path())
-            .collect::<Vec<PathBuf>>()
-            .hash(&mut s);
-        let hash = s.finish();
+        // Remove old files
+        // TODO: this is stupid - and you know it
+        for i in updates.removed.iter().filter(|x| x.exists()) {
+            fs::remove_file(cache.join(i.file_name()?)).ok()?;
+        }
 
         let bar = ProgressBar::new(files.len() as u64);
         bar.set_style(PROGRESS_STYLE.to_owned());
 
-        for file in files {
-            let path = file.path();
-            let img = image::open(&path).unwrap();
+        for file in updates.added {
+            let img = image::open(&file).unwrap();
             let dst_image = crate::image::scale_image(
                 &img,
-                u32::MAX,
-                THUMBNAIL_SIZE,
+                image_size.0,
+                image_size.1,
                 fir::ResizeAlg::Convolution(fir::FilterType::Lanczos3),
             );
 
             image::save_buffer(
-                cache.join(path.file_name()?),
+                cache.join(file.file_name()?),
                 dst_image.buffer(),
                 dst_image.width().get(),
                 dst_image.height().get(),
@@ -134,113 +137,141 @@ impl Album {
             bar.inc(1);
         }
 
-        fs::write(cache.join(".lock"), format!("{:x}", hash)).ok()?;
+        fs::write(cache.join(".lock"), self.recalculate_hash(check_type)).ok()?;
 
         Some(())
     }
 
-    pub fn check_thumbs(&self) -> Option<bool> {
-        let cache = self.path.join(".thumbs");
-        let mut files = fs::read_dir(self.path.join(self.clone().images_path))
-            .ok()?
-            .map(|x| x.unwrap())
-            .collect::<Vec<_>>();
-        sort_photos(&mut files);
-
+    pub fn check(&self, check_type: ProcessType) -> ImageUpdates {
+        let cache = self.path.join(check_type.to_path());
         let lock = match fs::read_to_string(cache.join(".lock")) {
             Ok(i) => i,
-            Err(_) => return Some(false),
+            Err(_) => return ImageUpdates::all(&self.path.join(&self.images_path)),
         };
 
-        let mut s = DefaultHasher::new();
-        files
-            .iter()
-            .map(|x| x.path())
-            .collect::<Vec<PathBuf>>()
-            .hash(&mut s);
-        let hash = s.finish();
+        // Make a hash map to all cached images and thair hashes
+        let mut files = HashMap::new();
+        for i in lock.lines() {
+            let split = i.splitn(2, ':').collect::<Vec<_>>();
+            if split.len() != 2 {
+                continue;
+            }
 
-        if lock == format!("{:x}", hash) {
-            return Some(true);
+            files.insert(split[0], split[1]);
         }
 
-        Some(false)
+        let mut added = HashSet::new();
+        for i in fs::read_dir(self.path.join(&self.images_path))
+            .unwrap()
+            .map(Result::unwrap)
+            .filter(|x| x.path().is_file())
+            .filter(|x| x.path().file_name().unwrap() != ".lock")
+        {
+            // Try to remove the file from the hash map
+            // If not found or its hash is not its real hash add it to the added hash set
+            let filename = i.file_name();
+            let filename = filename.to_string_lossy();
+            let filename = filename.as_ref();
+
+            // Try to get the hash from the .lock file
+            let stored_hash = match files.remove(filename) {
+                Some(i) => i,
+                None => {
+                    added.insert(i.path());
+                    continue;
+                }
+            };
+
+            // Try to read the file
+            let raw_image = match fs::read(cache.join(filename)) {
+                Ok(i) => i,
+                Err(_) => {
+                    added.insert(i.path());
+                    continue;
+                }
+            };
+
+            // Hash the file and compare its hash to the stored hash
+            let hash = base16ct::lower::encode_string(&md5::compute(raw_image).0);
+            if stored_hash != hash {
+                added.insert(i.path());
+            }
+        }
+
+        // Files to remove are the remaining files in the hash map
+        // and files in added are to be added / rebuilt
+        let removed = files.keys().map(PathBuf::from).collect::<HashSet<_>>();
+        ImageUpdates { added, removed }
     }
 
-    pub fn gen_previews(&self) -> Option<()> {
-        let cache = self.path.join(".previews");
-        let mut files = fs::read_dir(self.path.join(self.clone().images_path))
-            .ok()?
-            .map(|x| x.unwrap())
-            .collect::<Vec<_>>();
-        sort_photos(&mut files);
+    fn recalculate_hash(&self, check_type: ProcessType) -> String {
+        let mut out = Vec::new();
 
-        if !cache.exists() {
-            fs::create_dir(&cache).ok()?;
+        for i in fs::read_dir(self.path.join(check_type.to_path()))
+            .unwrap()
+            .map(Result::unwrap)
+            .filter(|x| x.path().is_file())
+            .filter(|x| x.path().file_name().unwrap() != ".lock")
+        {
+            let raw_image = fs::read(i.path()).unwrap();
+            let hash = base16ct::lower::encode_string(&md5::compute(raw_image).0);
+            out.push(format!("{}:{}", i.file_name().to_string_lossy(), hash));
         }
 
-        let mut s = DefaultHasher::new();
-        files
-            .iter()
-            .map(|x| x.path())
-            .collect::<Vec<PathBuf>>()
-            .hash(&mut s);
-        let hash = s.finish();
+        out.join("\n")
+    }
+}
 
-        let bar = ProgressBar::new(files.len() as u64);
-        bar.set_style(PROGRESS_STYLE.to_owned());
-        for file in files {
-            let path = file.path();
-            let img = image::open(&path).unwrap();
-            let dst_image = crate::image::scale_image(
-                &img,
-                PREVIEW_SIZE.0,
-                PREVIEW_SIZE.1,
-                fir::ResizeAlg::Convolution(fir::FilterType::Lanczos3),
-            );
+impl ImageUpdates {
+    /// Add all files in the image directory to the add field
+    fn all<T: AsRef<Path>>(path: T) -> Self {
+        let mut added = HashSet::new();
 
-            image::save_buffer(
-                cache.join(path.file_name()?),
-                dst_image.buffer(),
-                dst_image.width().get(),
-                dst_image.height().get(),
-                img.color(),
-            )
-            .unwrap();
-            bar.inc(1);
+        for i in fs::read_dir(path)
+            .unwrap()
+            .map(Result::unwrap)
+            .filter(|x| x.path().is_file())
+        {
+            added.insert(i.path());
         }
 
-        fs::write(cache.join(".lock"), format!("{:x}", hash)).ok()?;
-
-        Some(())
+        Self {
+            added,
+            removed: HashSet::new(),
+        }
     }
 
-    pub fn check_previews(&self) -> Option<bool> {
-        let cache = self.path.join(".previews");
-        let mut files = fs::read_dir(self.path.join(self.clone().images_path))
-            .ok()?
-            .map(|x| x.unwrap())
-            .collect::<Vec<_>>();
-        sort_photos(&mut files);
+    pub fn is_none(&self) -> bool {
+        self.added.is_empty() && self.removed.is_empty()
+    }
+}
 
-        let lock = match fs::read_to_string(cache.join(".lock")) {
-            Ok(i) => i,
-            Err(_) => return Some(false),
-        };
-
-        let mut s = DefaultHasher::new();
-        files
-            .iter()
-            .map(|x| x.path())
-            .collect::<Vec<PathBuf>>()
-            .hash(&mut s);
-        let hash = s.finish();
-
-        if lock == format!("{:x}", hash) {
-            return Some(true);
+impl ProcessType {
+    fn to_path(self) -> PathBuf {
+        match self {
+            ProcessType::Thumbnail => PathBuf::from(".thumbs"),
+            ProcessType::Preview => PathBuf::from(".previews"),
         }
+    }
 
-        Some(false)
+    fn to_image_size(self) -> (u32, u32) {
+        match self {
+            ProcessType::Thumbnail => (u32::MAX, THUMBNAIL_SIZE),
+            ProcessType::Preview => PREVIEW_SIZE,
+        }
+    }
+
+    pub fn all() -> [Self; 2] {
+        [ProcessType::Thumbnail, ProcessType::Preview]
+    }
+}
+
+impl Display for ProcessType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ProcessType::Thumbnail => write!(f, "thumbnails"),
+            ProcessType::Preview => write!(f, "previews"),
+        }
     }
 }
 
@@ -304,4 +335,11 @@ pub fn sort_photos(photos: &mut [DirEntry]) {
 
         x.cmp(y)
     });
+}
+
+fn try_config(config: &Config, key: &str) -> Result<String, AlbumError> {
+    match config.get_str(key) {
+        Ok(i) => Ok(i),
+        Err(e) => Err(AlbumError::ConfigParse(e)),
+    }
 }

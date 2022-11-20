@@ -10,12 +10,6 @@ pub fn photo(i: Album, req: &Request) -> Option<Response> {
     let image = req.path.splitn(2, "/thumb/").last()?.replace("%20", " ");
     let cache = i.path.join(".thumbs");
 
-    if !i.check_thumbs()? {
-        println!("[*] Genarateing Thumbnails for `{}`", i.name);
-        i.gen_thumbs()?;
-        println!("[*] Done!");
-    }
-
     let path = cache.join(image);
     let image_data = match fs::read(path.clone()) {
         Ok(i) => i,

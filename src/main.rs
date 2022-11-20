@@ -12,7 +12,9 @@ mod template;
 use album::Album;
 use template::Template;
 
-pub const VERSION: &str = "0.2.0";
+use crate::album::ProcessType;
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const IMAGE_FORMATS: &[&str] = &["png", "jpg", "jpeg"];
 
 pub static mut ALBUMS: Option<Vec<Album>> = None;
@@ -35,14 +37,14 @@ fn main() {
 
     println!("[*] Loaded {} Albums", albums.len());
     for i in 0..albums.len() {
-        if !albums[i].check_thumbs().unwrap() {
-            println!(" ├── ! Genarateing Thumbnails for `{}`", albums[i].name);
-            albums[i].gen_thumbs().unwrap();
-        }
+        for j in ProcessType::all() {
+            let updates = albums[i].check(j);
+            if updates.is_none() {
+                continue;
+            }
 
-        if !albums[i].check_previews().unwrap() {
-            println!(" ├── ! Genarateing Previews for `{}`", albums[i].name);
-            albums[i].gen_previews().unwrap();
+            println!(" ├── ! Generating {} for Album {}", j, albums[i].name);
+            albums[i].gen_cache(updates, j).unwrap();
         }
 
         if i < albums.len() - 1 {

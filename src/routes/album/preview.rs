@@ -10,12 +10,6 @@ pub fn photo(i: Album, req: &Request) -> Option<Response> {
     let image = req.path.splitn(2, "/preview/").last()?.replace("%20", " ");
     let cache = i.path.join(".previews");
 
-    if !i.check_previews()? {
-        println!("[*] Genarateing Previews for `{}`", i.name);
-        i.gen_previews()?;
-        println!("[*] Done!");
-    }
-
     let path = cache.join(image);
     let image_data = match fs::read(path.clone()) {
         Ok(i) => i,
