@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 use afire::{
+    error::Result,
     middleware::{MiddleRequest, Middleware},
     Method, Request, Response, Server,
 };
@@ -20,10 +21,15 @@ const TIME_UNITS: &[&str] = &["μs", "ms", "s"];
 struct Handler;
 
 impl Middleware for Handler {
-    fn pre(&self, req: Request) -> MiddleRequest {
+    fn pre(&self, req: &Result<Request>) -> MiddleRequest {
+        let req = match req {
+            Ok(i) => i,
+            Err(_) => return MiddleRequest::Continue,
+        };
+
         let start = Instant::now();
 
-        let res = match middleware(&req) {
+        let res = match middleware(req) {
             Some(i) => i,
             None => Some(
                 Response::new()

@@ -3,7 +3,7 @@ use std::num::NonZeroU32;
 use fast_image_resize as fir;
 use fast_image_resize::{Image, MulDiv, PixelType};
 use fir::ResizeAlg;
-use image::{ColorType, DynamicImage, GenericImageView};
+use image::{ColorType, DynamicImage};
 
 /// Scales an image to be its biggest side that fits within the given dimensions.
 pub fn scale_image(
